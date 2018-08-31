@@ -11,6 +11,7 @@ from confluent_kafka.avro.serializer import (SerializerError,  # noqa
                                              KeySerializerError,
                                              ValueSerializerError)
 from confluent_kafka.avro.serializer.message_serializer import MessageSerializer
+from json import json
 
 
 class AvroProducer(Producer):
@@ -139,8 +140,11 @@ class AvroConsumer(Consumer):
             return message
         if not message.error():
             if message.value() is not None:
-                decoded_value = self._serializer.decode_message(message.value())
-                message.set_value(decoded_value)
+                json_value = json.loads(message.value())
+                action = json_value['action']
+                payload = json_value['payload']
+                decoded_payload = self._serializer.decode_message(payload)
+                message.set_value({ action: action, payload: decoded_payload })
             if message.key() is not None:
                 decoded_key = self._serializer.decode_message(message.key())
                 message.set_key(decoded_key)
